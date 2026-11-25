@@ -16,6 +16,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        // CI signs every debug build with the same key (DEBUG_KEYSTORE_FILE),
+        // so a new APK installs over the old one. Unset = Gradle's own debug key.
+        debug {
+            def sharedKeystore = System.getenv("DEBUG_KEYSTORE_FILE")
+            if (sharedKeystore) {
+                storeFile file(sharedKeystore)
+                storePassword "android"
+                keyAlias "androiddebugkey"
+                keyPassword "android"
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false

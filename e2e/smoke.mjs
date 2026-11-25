@@ -29,6 +29,7 @@ const fakeMotion = () => {
   };
   window.__tilt(45); // held in front of you while tapping Start
   setInterval(() => {
+    if (typeof DeviceMotionEvent === 'undefined') return; // blank page before navigation
     window.dispatchEvent(new DeviceMotionEvent('devicemotion', { accelerationIncludingGravity: pose, interval: 16 }));
   }, 16);
 };
