@@ -4,7 +4,7 @@ import { getDeck, MIX_ID, sourceDecks } from '../decks';
 import { fitText, h } from '../dom';
 import { clearSeen, markSeen, seenFor } from '../history';
 import { buildPool, buildQueue, shuffle } from '../picker';
-import { buzz } from '../platform';
+import { buzz, isTouch } from '../platform';
 import { setLastRound } from '../round';
 import { goBack, navigate, type Params, type Screen } from '../router';
 import { getSettings, TRIGGER_DEGREES, updateSettings } from '../settings';
@@ -22,6 +22,9 @@ const NO_SENSOR_MS = 1500;
 const FLASH_MIN_MS = 450;
 const FLASH_MAX_MS = 1600;
 const COUNTDOWN_STEP_MS = 800;
+
+/** Phones must be sideways; a portrait phone also reads as "upright". */
+const isLandscape = () => !isTouch || window.innerWidth > window.innerHeight;
 
 export function playScreen(params: Params): Screen {
   const deck = getDeck(params.deckId);
@@ -116,7 +119,13 @@ export function playScreen(params: Params): Screen {
       h('button', { class: 'btn', onclick: () => quit() }, 'Quit'),
     ),
   );
-  const rotateEl = h('div', { class: 'rotate-hint' }, h('div', { class: 'rotate-icon' }, '📱'), h('p', null, 'Turn your phone sideways'));
+  const rotateEl = h(
+    'div',
+    { class: 'rotate-hint' },
+    h('div', { class: 'rotate-icon' }, '📱'),
+    h('p', null, 'Turn your phone sideways'),
+    h('p', { class: 'small' }, 'Not turning? Switch off rotation lock (iPhone: Control Center).'),
+  );
 
   const el = h(
     'div',
@@ -269,7 +278,7 @@ export function playScreen(params: Params): Screen {
     }
     const tilt = detector.sample(x, y, z, t);
     if (phase === 'position') {
-      if (signDecided && detector.isUpright) {
+      if (signDecided && detector.isUpright && isLandscape()) {
         uprightSince ??= t;
         if (t - uprightSince >= HOLD_TO_START_MS) startCountdown();
       } else uprightSince = null;
@@ -334,7 +343,10 @@ export function playScreen(params: Params): Screen {
   const onVisibility = () => {
     if (document.visibilityState === 'hidden') pause();
   };
-  const onResize = () => card && fitWord();
+  const onResize = () => {
+    if (phase === 'playing' && !isLandscape()) pause(); // turned to portrait: the word is hidden
+    if (card) fitWord();
+  };
 
   let stopMotion = () => {};
   return {

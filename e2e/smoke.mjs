@@ -131,6 +131,27 @@ const score = async (page) => Number(await page.locator('.hud-score').textConten
   await page.close();
 }
 
+// ---- phone stuck in portrait (rotation lock) -----------------------------------
+{
+  const page = await newPage({ landscape: false });
+  await page.goto(`${BASE}?seconds=5`);
+  await page.getByRole('button', { name: /Food/ }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.waitForSelector('.overlay.position');
+  await page.waitForTimeout(500);
+  await tilt(page, 0);
+  await page.waitForTimeout(1500);
+  check(await page.locator('.rotate-hint').isVisible(), 'portrait shows the turn-sideways hint');
+  await shot(page, '10a-rotate-hint');
+  check((await page.locator('.overlay.countdown').count()) === 0, 'no countdown while the phone is in portrait');
+  // the game went full screen; leave it so the test can resize the window
+  await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.waitForSelector('.overlay.countdown', { timeout: 3000 });
+  check(true, 'countdown starts once turned sideways');
+  await page.close();
+}
+
 // ---- no motion sensor: buttons ----------------------------------------------
 {
   const page = await newPage({ motion: false });
