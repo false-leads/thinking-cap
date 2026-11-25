@@ -1,0 +1,7 @@
+node_modules/
+dist/
+screenshots/tmp/
+*.log
+.DS_Store
+*.keystore
+*.pem
